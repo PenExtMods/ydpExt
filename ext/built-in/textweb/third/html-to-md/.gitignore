@@ -1,0 +1,16 @@
+test.md
+draft
+.idea
+.DS_Store
+Thumbs.db
+db.json
+*.log
+node_modules/
+lib
+devInfo.md
+coverage
+demo
+dist
+codecov.yml
+dev/
+debugDev.html

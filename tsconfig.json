@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": "./",
+    "outDir": "./build",
+    "noEmit": false,
+    "rootDir": "./src"
+  },
+  "exclude": ["node_modules" ,"build" ,"ext"],
+  "include": ["**/*.ts"]
+}

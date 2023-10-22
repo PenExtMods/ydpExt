@@ -1,0 +1,31 @@
+language: node_js
+node_js:
+  - '16.15.1'
+
+# S: Build Lifecycle
+install:
+  - npm install
+  - npm install -g codecov
+
+script:
+  - npm run test
+  - npm run build:demo
+
+after_script:
+  - cd ./demo
+  - git init
+  - git config user.name "stonehank"
+  - git config user.email "stonehank310@gmail.com"
+  - git add .
+  - git commit -m "Update"
+  - git push --force --quiet "https://${GH_TOKEN}@${GH_REF}" master:${P_BRANCH} >/dev/null 2>&1
+
+# E: Build LifeCycle
+
+branches:
+  only:
+    - master
+env:
+  global:
+    - GH_REF: github.com/stonehank/html-to-md
+    - P_BRANCH: gh-pages

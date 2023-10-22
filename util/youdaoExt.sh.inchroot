@@ -1,0 +1,4 @@
+#!/bin/sh
+export ydpSysRootPath=/proc/1/root
+export mtpPath=/proc/1/root/userdisk/Music
+node /youdaoExt/main.js

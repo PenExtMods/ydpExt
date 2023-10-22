@@ -1,0 +1,13 @@
+#!/bin/sh
+startfile=/tmp/.youdaoExtStarted
+if [ -f $startfile ];then
+    exit
+fi
+touch $startfile
+
+sleep 20
+
+export ydpSysRootPath=/
+export mtpPath=/userdisk/Music
+
+node /userdisk/youdaoExt/main.js &

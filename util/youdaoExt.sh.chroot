@@ -1,0 +1,22 @@
+#!/bin/sh
+startfile=/tmp/.youdaoExtStarted
+if [ -f $startfile ];then
+    exit
+fi
+touch $startfile
+
+sleep 20
+
+mkdir -p /tmp/ydext
+mount --bind /tmp/ydext /userdisk/chroot/tmp
+
+mount -t proc proc /userdisk/chroot/proc
+mount -t sysfs sys /userdisk/chroot/sys
+mount --bind /dev /userdisk/chroot/dev
+mkdir -p /userdisk/chroot/dev/pts
+mount -t devpts none /userdisk/chroot/dev/pts
+
+cp /usr/share/zoneinfo/Asia/Shanghai /userdisk/chroot/etc/localtime
+
+
+chroot /userdisk/chroot ./youdaoExt.sh &

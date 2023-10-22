@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "html-to-md": "^0.8.3",
+    "image-js": "^0.35.4"
+  }
+}

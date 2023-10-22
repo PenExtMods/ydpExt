@@ -1,0 +1,20 @@
+{
+  "name": "ydpext",
+  "version": "1.0.0",
+  "license":"MIT",
+  "type": "module",
+  "dependencies": {
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.1",
+    "@types/ws": "^8.5.5",
+    "tsx": "^3.12.7",
+    "typescript": "^5.1.6"
+  },
+  "scripts": {
+    "init": "./script/init.sh",
+    "build:main": "./script/build.main.sh",
+    "build:full": "./script/build.full.sh"
+  }
+}
