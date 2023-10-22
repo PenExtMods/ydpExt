@@ -9,8 +9,13 @@ import * as fs from "node:fs";
 async function ffmpegDecodeToPng(data,extname){
     return new Promise((resolve,reject)=>{
         var fn = sharedLib.random.randomUUID();
+<<<<<<< HEAD
         fs.writeFileSync(`/ydpsys/tmp/${fn}.${extname}`,data);
         var ffmpeg = childProcess.spawn('chroot',['.','ffmpeg','-i',`/tmp/${fn}.${extname}`,`/tmp/${fn}.png`],{cwd:'/ydpsys'});
+=======
+        fs.writeFileSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.${extname}`,data);
+        var ffmpeg = childProcess.spawn('chroot',['.','ffmpeg','-i',`/tmp/${fn}.${extname}`,`/tmp/${fn}.png`],{cwd:`${process.env['ydpSysRootPath']}`});
+>>>>>>> 5220509 (init.)
         var outTxt = '';
         ffmpeg.stdout.on('data',(d)=>{
             outTxt += String(d);
@@ -24,6 +29,7 @@ async function ffmpegDecodeToPng(data,extname){
             }else{
                 console.log('[libPic] ffmpeg exit with code',code,'. ');
             }
+<<<<<<< HEAD
             if (!fs.existsSync(`/ydpsys/tmp/${fn}.png`)){
                 reject(outTxt);
                 return;
@@ -31,6 +37,15 @@ async function ffmpegDecodeToPng(data,extname){
             var res = fs.readFileSync(`/ydpsys/tmp/${fn}.png`);
             fs.unlinkSync(`/ydpsys/tmp/${fn}.png`);
             fs.unlinkSync(`/ydpsys/tmp/${fn}.${extname}`);
+=======
+            if (!fs.existsSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`)){
+                reject(outTxt);
+                return;
+            }
+            var res = fs.readFileSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`);
+            fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`);
+            fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.${extname}`);
+>>>>>>> 5220509 (init.)
             resolve(res);
         });
     });
@@ -139,6 +154,10 @@ export async function processPic(path) {
             data = await ffmpegDecodeToPng(data,'pic');
             img = await imageJs.Image.load(data);
         }catch(ee){
+<<<<<<< HEAD
+=======
+            console.log('[libPic] try ffmpeg failed. \n',ee);
+>>>>>>> 5220509 (init.)
             return {
                 type: 'text/plain',
                 buff:Buffer.from(`${url}\n${JSON.stringify(opt)}\n${ee}`)
@@ -172,7 +191,11 @@ export async function processPic(path) {
         type: 'image/png'
     };
 }
+<<<<<<< HEAD
 export async function process(Url, nowUrl, processServerHost, opt,svgOpt) {
+=======
+export async function processLagacy(Url, nowUrl, processServerHost, opt,svgOpt) {
+>>>>>>> 5220509 (init.)
     return new Promise((resolve, reject) => {
         try {
             /*

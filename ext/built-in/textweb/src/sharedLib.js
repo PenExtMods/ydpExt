@@ -214,7 +214,11 @@ export async function lagacyProcess(input, processServerHost) {
                         break;
                     }
                     case 'pic': {
+<<<<<<< HEAD
                         let o = await pic.process(c.data, input.url, processServerHost, input.opt,input.svgOpt);
+=======
+                        let o = await pic.processLagacy(c.data, input.url, processServerHost, input.opt,input.svgOpt);
+>>>>>>> 5220509 (init.)
                         if (!pics.includes(o[0].data)) pics.push(o[0].data);
                         out = out.concat(o);
                         break;
