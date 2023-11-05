@@ -474,11 +474,6 @@ export class application extends extType.application.base {
             } catch (e) {
                 console.log('[picProcessServer] picProcessServerError', e);
                 try {
-<<<<<<< HEAD
-=======
-                    res.writeHead(200, 'OK', { 'content-type': 'image/png', 'content-length': `${picLoadFailTip.length}` });
-                    res.write(picLoadFailTip);
->>>>>>> 5220509 (init.)
                     res.end();
                 } catch (ee) { }
             }

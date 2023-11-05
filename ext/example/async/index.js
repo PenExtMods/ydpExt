@@ -63,22 +63,11 @@ export async function input(session,msg,update,done,isAlive,hold){
 }
 
 export async function switchIn(session,cb){
-<<<<<<< HEAD
     return new Promise(async (resolve,reject)=>{
         await fadeIn(`this input event used \`Promise\`.`,fadeTime,update,0,2048,[]);
         setTimeout(async ()=>{
             await fadeOut(`this input event used \`Promise\`.`,fadeTime,update,0,2048,[]);
             await fadeIn(helpInfo,fadeTime,update,0,2048,recommendRes);
-=======
-    const f = (txt,nowNum,maxNum,suggestedResponse)=>{
-        cb(txt,suggestedResponse,nowNum,maxNum);
-    };
-    return new Promise(async (resolve,reject)=>{
-        await fadeIn(`this input event used \`Promise\`.`,fadeTime,f,0,2048,[]);
-        setTimeout(async ()=>{
-            await fadeOut(`this input event used \`Promise\`.`,fadeTime,f,0,2048,[]);
-            await fadeIn(helpInfo,fadeTime,f,0,2048,recommendRes);
->>>>>>> 5220509 (init.)
             resolve();
         },3000);
     });
