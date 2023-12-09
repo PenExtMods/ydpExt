@@ -10,7 +10,7 @@ chmod +x /usr/bin/youdaoExt
 mv ./node.native ./node
 chmod +x ./node
 ln -sr ./node /usr/bin/node
-chmod +x ./usr/bin/node
+chmod +x /usr/bin/node
 rm ./node.chroot
 
 mkdir /userdisk/Music/gpt
@@ -24,6 +24,6 @@ sed -i '1i #!/bin/sh' /usr/bin/runDictPen
 chmod +x /usr/bin/runDictPen
 
 rm ./install.chroot.sh
-rm ./unintall.chroot.sh
+rm ./uninstall.chroot.sh
 
 echo "done."
