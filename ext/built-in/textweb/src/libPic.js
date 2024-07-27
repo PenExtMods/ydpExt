@@ -6,11 +6,11 @@ import * as http from "node:http";
 import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
 
-async function ffmpegDecodeToPng(data,extname){
+export async function ffmpegDecodeToPng(data,extname){
     return new Promise((resolve,reject)=>{
         var fn = sharedLib.random.randomUUID();
-        fs.writeFileSync(`/ydpsys/tmp/${fn}.${extname}`,data);
-        var ffmpeg = childProcess.spawn('chroot',['.','ffmpeg','-i',`/tmp/${fn}.${extname}`,`/tmp/${fn}.png`],{cwd:'/ydpsys'});
+        fs.writeFileSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.${extname}`,data);
+        var ffmpeg = childProcess.spawn('chroot',['.','ffmpeg','-i',`/tmp/${fn}.${extname}`,`/tmp/${fn}.png`],{cwd:`${process.env['ydpSysRootPath']}`});
         var outTxt = '';
         ffmpeg.stdout.on('data',(d)=>{
             outTxt += String(d);
@@ -24,13 +24,13 @@ async function ffmpegDecodeToPng(data,extname){
             }else{
                 console.log('[libPic] ffmpeg exit with code',code,'. ');
             }
-            if (!fs.existsSync(`/ydpsys/tmp/${fn}.png`)){
+            if (!fs.existsSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`)){
                 reject(outTxt);
                 return;
             }
-            var res = fs.readFileSync(`/ydpsys/tmp/${fn}.png`);
-            fs.unlinkSync(`/ydpsys/tmp/${fn}.png`);
-            fs.unlinkSync(`/ydpsys/tmp/${fn}.${extname}`);
+            var res = fs.readFileSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`);
+            fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.png`);
+            fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/${fn}.${extname}`);
             resolve(res);
         });
     });
@@ -139,6 +139,7 @@ export async function processPic(path) {
             data = await ffmpegDecodeToPng(data,'pic');
             img = await imageJs.Image.load(data);
         }catch(ee){
+            console.log('[libPic] try ffmpeg failed. \n',ee);
             return {
                 type: 'text/plain',
                 buff:Buffer.from(`${url}\n${JSON.stringify(opt)}\n${ee}`)
@@ -172,7 +173,7 @@ export async function processPic(path) {
         type: 'image/png'
     };
 }
-export async function process(Url, nowUrl, processServerHost, opt,svgOpt) {
+export async function processLagacy(Url, nowUrl, processServerHost, opt,svgOpt) {
     return new Promise((resolve, reject) => {
         try {
             /*

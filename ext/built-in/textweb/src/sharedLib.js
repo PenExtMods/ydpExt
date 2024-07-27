@@ -8,6 +8,7 @@ import * as random from "./libRandom.js";
 import * as zlib from "node:zlib";
 import * as fs from "node:fs";
 import * as dns from "node:dns";
+import * as child from "node:child_process";
 
 export {md,pic,encode,random};
 const html2mdFix = html2md.default;
@@ -214,7 +215,7 @@ export async function lagacyProcess(input, processServerHost) {
                         break;
                     }
                     case 'pic': {
-                        let o = await pic.process(c.data, input.url, processServerHost, input.opt,input.svgOpt);
+                        let o = await pic.processLagacy(c.data, input.url, processServerHost, input.opt,input.svgOpt);
                         if (!pics.includes(o[0].data)) pics.push(o[0].data);
                         out = out.concat(o);
                         break;
@@ -406,4 +407,144 @@ export function loadCookie(host,cookieDir){
         //thost.shift();
     }
     return out;
+}
+
+export async function viewPic(url){
+    console.log('[viewPic] view',url);
+    var id = random.randomUUID();
+    var fn = (url.startsWith('https://') || url.startsWith('http://')) ? `file:///tmp/${id}.png` : url;
+    var code = `
+import QtQuick 2.15
+import QtQuick.Controls 1.0
+import QtQuick.Layouts 1.15
+
+ApplicationWindow {
+    id: root
+    visible: true
+    width: 320
+    height: 170
+    title: "Image Viewer"
+    color: "black"
+    flags: Qt.FramelessWindowHint
+        Rectangle {
+            id: imageArea
+            color: "black"
+            width: parent.width*0.9
+            height: parent.height
+            x: parent.width*0.1
+            y:0
+            Image {
+                id: imageViewer
+                x:0
+                y:0
+                scale: 1
+                source: "${fn}"
+                fillMode: Image.PreserveAspectFit
+            }
+            MouseArea {
+                id: dragArea
+                anchors.fill: parent
+                drag.target: imageViewer
+                drag.axis: Drag.XAndYAxis
+
+            }
+        }
+        Rectangle {
+            color: "black"
+            width: parent.width*0.1
+            height: parent.height
+            Button {
+                text: "×"
+                x: parent.width * 0.05
+                y: parent.width * 0.05
+                width: parent.width * 0.9
+                height: parent.width * 0.9
+                onClicked: Qt.quit()
+
+            }
+            Button {
+                text: "C"
+                x: parent.width * 0.05
+                y: parent.height - parent.width * 0.05*3 - parent.width * 0.9*3
+                width: parent.width * 0.9
+                height: parent.width * 0.9
+                onClicked: {
+                    imageViewer.x = imageViewer.width * (imageViewer.scale-1) / 2;
+                    imageViewer.y = imageViewer.height * (imageViewer.scale-1) / 2;
+                }
+
+            }
+            Button {
+                text: "+"
+                x: parent.width * 0.05
+                y: parent.height - parent.width * 0.05*2 - parent.width * 0.9*2
+                width: parent.width * 0.9
+                height: parent.width * 0.9
+                onClicked: {
+                    imageViewer.scale = imageViewer.scale + 0.02;
+                }
+
+            }
+            Button {
+                text: "-"
+                x: parent.width * 0.05
+                y: parent.height - parent.width * 0.05 - parent.width * 0.9
+                width: parent.width * 0.9
+                height: parent.width * 0.9
+                onClicked: {
+                    if (imageViewer.scale - 0.02 > 0){
+                        imageViewer.scale = imageViewer.scale - 0.02;
+                    }else{
+                        imageViewer.scale = 0;
+                    }
+                }
+            }
+        }
+}
+    `;
+    fs.writeFileSync(`${process.env['ydpSysRootPath']}/tmp/image.qml`,code);
+    if ((url.startsWith('https://') || url.startsWith('http://'))){
+        var req = {
+            context: {
+                url: url,
+                ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+                cookie: '',
+                refer: url
+            },
+            body: null,
+            method: 'GET',
+            header: {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Sec-Ch-Ua': '"Chromium";v="117", "Not)A;Brand";v="8", "Google Chrome";v="117"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Linux"',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en-GB;q=0.8,en-US;q=0.7,en;q=0.6',
+                'Cache-Control': 'max-age=0'
+            }
+        };
+        var data = await fetch(req);
+        if (data.body==null) throw 'not any data received';
+        fs.writeFileSync(`${process.env['ydpSysRootPath']}/tmp/${id}.png`,await pic.ffmpegDecodeToPng(data.body,'pic'));
+    }
+    var imageViewer = child.spawn('chroot',['.','qml',`/tmp/image.qml`],{cwd:`${process.env['ydpSysRootPath']}`});
+    var outTxt = '';
+    imageViewer.on('close',(c)=>{
+        fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/${id}.png`);
+        fs.unlinkSync(`${process.env['ydpSysRootPath']}/tmp/image.qml`);
+        console.log('[viewPic] process exit with code',c,'.\n',outTxt);
+    });
+    imageViewer.on('error',(e)=>{
+        console.log('[viewPic] err\n',e);
+    });
+    imageViewer.stdout.on('data',(d)=>{
+        outTxt += String(d);
+    });
+    imageViewer.stderr.on('data',(d)=>{
+        outTxt += String(d);
+    });
 }

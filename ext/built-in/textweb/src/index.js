@@ -244,12 +244,27 @@ async function newPage(Url, updateCb, doneCb, nowPageId, maxPageId) {
             updateCb('[Processing content]', maxPageId, maxPageId, []);
             try {
                 //pr = await sharedLib.process({ context: rr, opt: processPicOpt,svgOpt:processSvgPicOption , url: `${url.protocol}//${url.host}/${url.pathname}${url.search}` }, processServerHost);
+                let o = [];
+                extraData.pics.forEach(c=>{
+                    if (c.startsWith('http://')){
+                        // http://127.0.0.1:2233/url
+                        let t = c.split('/');
+                        if (t.length<4){
+                            o.push(c);
+                        }else{
+                            o.push(sharedLib.encode.decode(t[3]));
+                        }
+                    }else{
+                        o.push(c);
+                    }
+                });
                 pr = {
                     title: rr.title,
                     txt: rr.txt,
                     suggest: rr.suggest,
                     links: extraData.links,
-                    pics: extraData.pics
+                    pics: extraData.pics,
+                    rawPics: o
                 }
             } catch (e) {
                 //console.log(e);
@@ -352,6 +367,25 @@ export class application extends extType.application.base {
                             updateCb(`[Info] Now pic minResizeRate is ${processPicOpt.minResizeRate}`, __classPrivateFieldGet(this, _application_nowPageId, "f"), __classPrivateFieldGet(this, _application_page, "f").length - 1, cmds);
                             doneCb();
                             return;
+                        }
+                        if ((/^p[0-9]+$/g).test(um.text)){
+                            if (typeof  __classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.rawPics[parseInt(um.text.slice(1))] == 'string'){
+                                updateCb(`[Loading pic]`, __classPrivateFieldGet(this, _application_nowPageId, "f"), __classPrivateFieldGet(this, _application_page, "f").length - 1, []);
+                                try{
+                                    await sharedLib.viewPic(__classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.rawPics[parseInt(um.text.slice(1))]);
+                                }catch(e){
+                                    updateCb(`[Error] error happened while loading pic ${um.text}.  \n\`\`\`\n${e.code}\n${e.message}\n${e.cause}\n${e.stack}\n\`\`\`\n`, __classPrivateFieldGet(this, _application_nowPageId, "f"), __classPrivateFieldGet(this, _application_page, "f").length - 1, __classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.suggest.concat(cmds));
+                                    doneCb();
+                                    return;
+                                }
+                                updateCb(`[done]`, __classPrivateFieldGet(this, _application_nowPageId, "f"), __classPrivateFieldGet(this, _application_page, "f").length - 1, __classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.suggest.concat(cmds));
+                                doneCb();
+                                return;
+                            }else{
+                                updateCb(`[Error] the page ${__classPrivateFieldGet(this, _application_nowPageId, "f")} does not has pic ${um.text}.`, __classPrivateFieldGet(this, _application_nowPageId, "f"), __classPrivateFieldGet(this, _application_page, "f").length - 1, __classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.suggest.concat(cmds));
+                                doneCb();
+                                return;
+                            }
                         }
                         if (!((/[^0-9]/g).test(um.text))) {
                             if (typeof __classPrivateFieldGet(this, _application_page, "f")[__classPrivateFieldGet(this, _application_nowPageId, "f")].processResult.links[parseInt(um.text)] == 'string') {
@@ -474,6 +508,8 @@ export class application extends extType.application.base {
             } catch (e) {
                 console.log('[picProcessServer] picProcessServerError', e);
                 try {
+                    res.writeHead(200, 'OK', { 'content-type': 'image/png', 'content-length': `${picLoadFailTip.length}` });
+                    res.write(picLoadFailTip);
                     res.end();
                 } catch (ee) { }
             }
