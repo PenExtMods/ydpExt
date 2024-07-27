@@ -12,7 +12,6 @@ import EventEmitter from "node:events";
 export interface conversationIdPair{
     conversationId: string,
     clientId: string,
-    conversationSignature: string,
     result: {
         value: "Success",
         message: null
@@ -327,7 +326,10 @@ export class bingServer extends EventEmitter{
             });
             // on("create",url,headers,cb(code,statusTxt,conversationIdPair))
             this.emit("create",req.url,req.headers,(code:number,statusTxt:string,cidPair?:conversationIdPair)=>{
-                res.writeHead(code,statusTxt);
+                res.writeHead(code,statusTxt, {
+                    "x-sydney-conversationsignature": random.randomString(933, random.map.numberAndLetterAndSymbol),
+                    "x-sydney-encryptedconversationsignature": random.randomString(1280, random.map.numberAndLetterAndSymbol)
+                });
                 if (code===200) res.write(JSON.stringify(cidPair));
                 this.#session.cid = cidPair.conversationId;
                 this.#session.createAt.path = req.url;
@@ -341,7 +343,6 @@ export class bingServer extends EventEmitter{
     static generateConversationIdPair(userType:string){
         var out: conversationIdPair = {
             conversationId: `51D|${userType}|${random.randomString(64,random.map.numberAndUpperLetter)}`,
-            conversationSignature: random.randomString(44,random.map.numberAndLetterAndSymbol),
             clientId: random.randomString(15,random.map.number),
             result: {
                 value: "Success",
