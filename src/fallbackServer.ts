@@ -5,18 +5,18 @@
 
 import * as http from "node:http";
 import * as https from "node:https";
-import { WebSocket,WebSocketServer } from "ws";
+import * as net from "node:net";
 import * as event from "node:events";
 
 
 export class fallbackServer extends event.EventEmitter{
-    #wsServer: WebSocketServer;
+    #wsServer: net.Server;
     #httpServer = http.createServer();
     #listening = false;
 
     constructor(httpPort:number,wsPort:number,hostAddr:string,httpUrl:string,wsUrl:string){
         super();
-        this.#wsServer = new WebSocketServer({port:wsPort,host:hostAddr});
+        this.#wsServer = net.createServer();
         https.globalAgent.options.keepAlive = true;
 
         this.#wsServer.on('listening',()=>{
@@ -95,56 +95,45 @@ export class fallbackServer extends event.EventEmitter{
                 console.warn('[fallbackServer][http][err] res raise error.','\n',e);
             });
         });
-        this.#wsServer.on('connection',(socket,req)=>{
+        this.#wsServer.on('connection',(socket)=>{
             socket.on('error',(e)=>{
                 console.warn('[fallbackServer][ws][err] socket raise error.','\n',e);
-                try{socket.close();}catch(ee){}
+                try{socket.destroy();}catch(ee){}
             });
             let url: URL;
             try{
                 url = new URL(wsUrl);
             }catch(e){
                 console.warn('[fallbackServer][ws][err] not a vaild ws url "',httpUrl,'". \n',e);
-                socket.send('Please check you fallback url settings. ');
-                socket.close();
+                socket.write('Please check you fallback url settings. ');
+                socket.destroy();
                 return;
             }
             if (url.protocol!='ws:' && url.protocol!='wss:'){
                 console.warn('[fallbackServer][ws][err] we only accept ws and wss target, but receive "'+url.protocol+'". ');
-                socket.send('Please check you fallback url settings. ');
-                socket.close();
+                socket.write('Please check you fallback url settings. ');
+                socket.destroy();
                 return;
             }
-            let header = req.headers;
-            // on('ws',header,url)
-            this.emit('ws',req.headers,req.url);
-            header['host'] = url.host;
-            let remote = new WebSocket(wsUrl,{headers:header});
+            let remote = net.connect({
+                host: url.host,
+                port: url.port
+            });
             remote.on('error',(e)=>{
                 console.warn('[fallbackServer][ws][err] remote raise error.','\n',e);
-                socket.send(`${e.name} ${e.message} ${e.cause}`);
-                socket.close();
+                socket.write(`${e.name} ${e.message} ${e.cause}`);
+                socket.destroy();
             });
-            remote.on('close',(code,reason)=>{
-                socket.close(code);
-            });
-            remote.on('message',(data)=>{
-                // on('remoteMsg',data)
-                this.emit('remoteMsg',data);
-                socket.send(data);
-            });
-            remote.on('open',()=>{
-                socket.on('message',(data)=>{
-                    // on('localMsg',data)
-                    this.emit('localMsg',data);
-                    remote.send(data);
-                });
-                socket.on('close',(code,reason)=>{
-                    remote.close(code);
-                });
+            remote.on('connection', ()=>{
+                remote.pipe(socket);
+                socket.pipe(remote);
             });
         });
         this.#httpServer.listen(httpPort,hostAddr);
+        this.#wsServer.listen({
+            host: hostAddr,
+            port: wsPort
+        });
     }
 
     isListening(){
